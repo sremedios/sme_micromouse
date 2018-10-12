@@ -2,6 +2,10 @@
 #include <stdint.h>
 
 #define MAZE_SIZE 25
+#define ROBOT_SYMBOL 8
+#define EMPTY_SYMBOL 0
+#define WALL_SYMBOL 1 
+#define GOAL_SYMBOL 7
 
 // ********** EMPTY INTERNAL MAZE REPRESENTATION ********** //
 int goal_coords(int i, int j, int maze_size) {
@@ -11,14 +15,14 @@ int goal_coords(int i, int j, int maze_size) {
             center - 1 < j && j < center + 2;
 }
 
-void print_board(int maze[MAZE_SIZE][MAZE_SIZE]) {
-    for (int row = 0; row < MAZE_SIZE; ++row) {
-        for (int col = 0; col < MAZE_SIZE; ++col) {
-            printf("%d", maze[row][col]);
-        }
-        printf("\n");
-    }
+void update_mazes(int robot_pos_row,
+                  int robot_pos_col,
+                  int a[MAZE_SIZE][MAZE_SIZE],
+                  int b[MAZE_SIZE][MAZE_SIZE]) {
+    a[robot_pos_row][robot_pos_col] = ROBOT_SYMBOL;
+    b[robot_pos_row][robot_pos_col] = ROBOT_SYMBOL;
 }
+
 
 void print_boards(int a[MAZE_SIZE][MAZE_SIZE], int b[MAZE_SIZE][MAZE_SIZE]) {
     // Displays mazes side-by-size with a 5 space gap
@@ -40,11 +44,11 @@ void init_maze(int maze[MAZE_SIZE][MAZE_SIZE]) {
     for (int i = 0; i < MAZE_SIZE; ++i) {
         for (int j = 0; j < MAZE_SIZE; ++j) {
             if (i == 0 || i == MAZE_SIZE - 1 || j == 0 || j == MAZE_SIZE -1) {
-                maze[j][i] = 1;
+                maze[j][i] = WALL_SYMBOL;
             } else if (goal_coords(i, j, MAZE_SIZE)) {
-                maze[j][i] = 7;
+                maze[j][i] = GOAL_SYMBOL;
             } else {
-                maze[j][i] = 0;
+                maze[j][i] = EMPTY_SYMBOL;
             }
         }
     }
@@ -54,7 +58,7 @@ void init_maze(int maze[MAZE_SIZE][MAZE_SIZE]) {
 
 int main() {
     int internal_maze[MAZE_SIZE][MAZE_SIZE];
-
+    init_maze(internal_maze);
     int test_maze[MAZE_SIZE][MAZE_SIZE] = {
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
@@ -83,10 +87,13 @@ int main() {
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
     }; 
 
-    init_maze(internal_maze);
-    //print_board(internal_maze);
+    int robot_pos_row = 8;
+    int robot_pos_col = 8;
 
-    //print_board(test_maze);
+    update_mazes(robot_pos_row,
+                 robot_pos_col,
+                 internal_maze,
+                 test_maze);
     
     print_boards(internal_maze, test_maze);
     return 0;
