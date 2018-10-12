@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#define MAZE_SIZE 25
-#define ROBOT_SYMBOL 8
+#define MAZE_SIZE 26
+#define ROBOT_SYMBOL 2
 #define EMPTY_SYMBOL 0
 #define WALL_SYMBOL 1 
 #define GOAL_SYMBOL 7
@@ -22,7 +22,6 @@ void update_mazes(int robot_pos_row,
     a[robot_pos_row][robot_pos_col] = ROBOT_SYMBOL;
     b[robot_pos_row][robot_pos_col] = ROBOT_SYMBOL;
 }
-
 
 void print_boards(int a[MAZE_SIZE][MAZE_SIZE], int b[MAZE_SIZE][MAZE_SIZE]) {
     // Displays mazes side-by-size with a 5 space gap
@@ -55,10 +54,10 @@ void init_maze(int maze[MAZE_SIZE][MAZE_SIZE]) {
 }
 
 // ********** MAZE ********** //
-
 int main() {
     int internal_maze[MAZE_SIZE][MAZE_SIZE];
     init_maze(internal_maze);
+
     int test_maze[MAZE_SIZE][MAZE_SIZE] = {
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
