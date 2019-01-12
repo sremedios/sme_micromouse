@@ -6,6 +6,10 @@
 #define EMPTY_SYMBOL 0
 #define WALL_SYMBOL 1 
 #define GOAL_SYMBOL 7
+#define FACING_UP 0
+#define FACING_DOWN 1
+#define FACING_RIGHT 2
+#define FACING_LEFT 3
 
 // ********** EMPTY INTERNAL MAZE REPRESENTATION ********** //
 int goal_coords(int i, int j, int maze_size) {
@@ -39,6 +43,7 @@ void print_boards(int a[MAZE_SIZE][MAZE_SIZE], int b[MAZE_SIZE][MAZE_SIZE]) {
         }
         printf("\n");
     }
+    printf("\n");
 }
 
 void init_maze(int maze[MAZE_SIZE][MAZE_SIZE]) {
@@ -55,6 +60,37 @@ void init_maze(int maze[MAZE_SIZE][MAZE_SIZE]) {
     }
 }
 
+// only should be called if able to move_forward()
+void move_forward(int robot_direction,
+                  int internal_maze[MAZE_SIZE][MAZE_SIZE],
+                  int test_maze[MAZE_SIZE][MAZE_SIZE],
+                  int robot_pos_row,
+                  int robot_pos_col) {
+
+    internal_maze[robot_pos_row][robot_pos_col] = EMPTY_SYMBOL;
+    test_maze[robot_pos_row][robot_pos_col] = EMPTY_SYMBOL;
+
+    switch (robot_direction) {
+        case FACING_DOWN:
+            internal_maze[robot_pos_row + 1][robot_pos_col] = ROBOT_SYMBOL;
+            test_maze[robot_pos_row + 1][robot_pos_col] = ROBOT_SYMBOL;
+            break; 
+        case FACING_UP:
+            internal_maze[robot_pos_row - 1][robot_pos_col] = ROBOT_SYMBOL;
+            test_maze[robot_pos_row - 1][robot_pos_col] = ROBOT_SYMBOL;
+            break; 
+        case FACING_RIGHT:
+            internal_maze[robot_pos_row][robot_pos_col + 1] = ROBOT_SYMBOL;
+            test_maze[robot_pos_row][robot_pos_col + 1] = ROBOT_SYMBOL;
+            break; 
+        case FACING_LEFT:
+            internal_maze[robot_pos_row][robot_pos_col - 1] = ROBOT_SYMBOL;
+            test_maze[robot_pos_row][robot_pos_col - 1] = ROBOT_SYMBOL;
+            break; 
+    };
+}
+
+
 // ********** MAZE ********** //
 int main() {
     int internal_maze[MAZE_SIZE][MAZE_SIZE];
@@ -69,14 +105,20 @@ int main() {
         {1, 1, 1, 1, 1, 1},
     }; 
 
+    // initial position
     int robot_pos_row = 1;
     int robot_pos_col = 1;
+    int robot_direction = FACING_DOWN;
 
     update_mazes(robot_pos_row,
                  robot_pos_col,
                  internal_maze,
                  test_maze);
+    print_boards(internal_maze, test_maze);
+
+    move_forward(robot_direction, internal_maze, test_maze, robot_pos_row, robot_pos_col);
     
     print_boards(internal_maze, test_maze);
+    
     return 0;
 }
