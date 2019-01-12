@@ -64,30 +64,62 @@ void init_maze(int maze[MAZE_SIZE][MAZE_SIZE]) {
 void move_forward(int robot_direction,
                   int internal_maze[MAZE_SIZE][MAZE_SIZE],
                   int test_maze[MAZE_SIZE][MAZE_SIZE],
-                  int robot_pos_row,
-                  int robot_pos_col) {
+                  int *robot_pos_row,
+                  int *robot_pos_col) {
 
-    internal_maze[robot_pos_row][robot_pos_col] = EMPTY_SYMBOL;
-    test_maze[robot_pos_row][robot_pos_col] = EMPTY_SYMBOL;
+    internal_maze[*robot_pos_row][*robot_pos_col] = EMPTY_SYMBOL;
+    test_maze[*robot_pos_row][*robot_pos_col] = EMPTY_SYMBOL;
 
     switch (robot_direction) {
         case FACING_DOWN:
-            internal_maze[robot_pos_row + 1][robot_pos_col] = ROBOT_SYMBOL;
-            test_maze[robot_pos_row + 1][robot_pos_col] = ROBOT_SYMBOL;
+            *robot_pos_row += 1;
             break; 
         case FACING_UP:
-            internal_maze[robot_pos_row - 1][robot_pos_col] = ROBOT_SYMBOL;
-            test_maze[robot_pos_row - 1][robot_pos_col] = ROBOT_SYMBOL;
+            *robot_pos_row -= 1;
             break; 
         case FACING_RIGHT:
-            internal_maze[robot_pos_row][robot_pos_col + 1] = ROBOT_SYMBOL;
-            test_maze[robot_pos_row][robot_pos_col + 1] = ROBOT_SYMBOL;
+            *robot_pos_col += 1;
             break; 
         case FACING_LEFT:
-            internal_maze[robot_pos_row][robot_pos_col - 1] = ROBOT_SYMBOL;
-            test_maze[robot_pos_row][robot_pos_col - 1] = ROBOT_SYMBOL;
+            *robot_pos_col -= 1;
             break; 
     };
+    internal_maze[*robot_pos_row][*robot_pos_col] = ROBOT_SYMBOL;
+    test_maze[*robot_pos_row][*robot_pos_col] = ROBOT_SYMBOL;
+}
+
+void turn_left(int *robot_direction) {
+    switch (*robot_direction) {
+        case FACING_DOWN:
+            *robot_direction = FACING_RIGHT;
+            break;
+        case FACING_UP:
+            *robot_direction = FACING_LEFT;
+            break;
+        case FACING_RIGHT:
+            *robot_direction = FACING_UP;
+            break;
+        case FACING_LEFT:
+            *robot_direction = FACING_DOWN;
+            break;
+    }
+}
+
+void turn_right(int *robot_direction) {
+    switch (*robot_direction) {
+        case FACING_DOWN:
+            *robot_direction = FACING_LEFT;
+            break;
+        case FACING_UP:
+            *robot_direction = FACING_RIGHT;
+            break;
+        case FACING_RIGHT:
+            *robot_direction = FACING_DOWN;
+            break;
+        case FACING_LEFT:
+            *robot_direction = FACING_UP;
+            break;
+    }
 }
 
 
@@ -116,9 +148,13 @@ int main() {
                  test_maze);
     print_boards(internal_maze, test_maze);
 
-    move_forward(robot_direction, internal_maze, test_maze, robot_pos_row, robot_pos_col);
-    
+    move_forward(robot_direction, internal_maze, test_maze, &robot_pos_row, &robot_pos_col);
     print_boards(internal_maze, test_maze);
+
+    turn_left(&robot_direction);
+    move_forward(robot_direction, internal_maze, test_maze, &robot_pos_row, &robot_pos_col);
+    print_boards(internal_maze, test_maze);
+
     
     return 0;
 }
