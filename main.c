@@ -1,7 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 
-#define MAZE_SIZE 6
+#define MAZE_SIZE 10
 #define ROBOT_SYMBOL 2
 #define EMPTY_SYMBOL 0
 #define WALL_SYMBOL 1 
@@ -30,6 +31,7 @@ void update_mazes(int robot_pos_row,
 void print_boards(int a[MAZE_SIZE][MAZE_SIZE], int b[MAZE_SIZE][MAZE_SIZE]) {
     // Displays mazes side-by-size with a 5 space gap
     const int GAP_SIZE = 5;
+    printf("INTERNAL\tACTUAL\n");
     for (int row = 0; row < MAZE_SIZE; ++row) {
         for (int col = 0; col < MAZE_SIZE + MAZE_SIZE + GAP_SIZE; ++col) {
 
@@ -63,12 +65,12 @@ void init_maze(int maze[MAZE_SIZE][MAZE_SIZE]) {
 // only should be called if able to move_forward()
 void move_forward(int robot_direction,
                   int internal_maze[MAZE_SIZE][MAZE_SIZE],
-                  int test_maze[MAZE_SIZE][MAZE_SIZE],
+                  int actual_maze[MAZE_SIZE][MAZE_SIZE],
                   int *robot_pos_row,
                   int *robot_pos_col) {
 
     internal_maze[*robot_pos_row][*robot_pos_col] = EMPTY_SYMBOL;
-    test_maze[*robot_pos_row][*robot_pos_col] = EMPTY_SYMBOL;
+    actual_maze[*robot_pos_row][*robot_pos_col] = EMPTY_SYMBOL;
 
     switch (robot_direction) {
         case FACING_DOWN:
@@ -85,7 +87,7 @@ void move_forward(int robot_direction,
             break; 
     };
     internal_maze[*robot_pos_row][*robot_pos_col] = ROBOT_SYMBOL;
-    test_maze[*robot_pos_row][*robot_pos_col] = ROBOT_SYMBOL;
+    actual_maze[*robot_pos_row][*robot_pos_col] = ROBOT_SYMBOL;
 }
 
 void turn_left(int *robot_direction) {
@@ -122,19 +124,80 @@ void turn_right(int *robot_direction) {
     }
 }
 
+// placeholder results until sonar is connected.
+// If there is a wall in front of the robot, return 0.1
+// Else, return 0.9
+float read_sonars(int actual_maze[MAZE_SIZE][MAZE_SIZE],
+                  int internal_maze[MAZE_SIZE][MAZE_SIZE],
+                  int robot_direction,
+                  int robot_pos_row,
+                  int robot_pos_col) {
+    int next_pos_row = robot_pos_row;
+    int next_pos_col = robot_pos_col;
+
+    int left_pos_row = robot_pos_row;
+    int left_pos_col = robot_pos_col;
+
+    int right_pos_row = robot_pos_row;
+    int right_pos_col = robot_pos_col;
+
+    switch (robot_direction) {
+        case FACING_DOWN:
+            next_pos_row += 1;
+            left_pos_col += 1;
+            right_pos_col -= 1;
+            break;
+        case FACING_UP:
+            next_pos_row -= 1;
+            left_pos_col -= 1;
+            right_pos_col += 1;
+            break;
+        case FACING_RIGHT:
+            next_pos_col += 1;
+            left_pos_row -= 1;
+            right_pos_row += 1;
+            break;
+        case FACING_LEFT:
+            next_pos_col -= 1;
+            left_pos_row += 1;
+            right_pos_row -= 1;
+            break;
+    }
+
+    if (actual_maze[left_pos_row][left_pos_col] == WALL_SYMBOL) {
+        internal_maze[left_pos_row][left_pos_col] = WALL_SYMBOL;
+    }
+    if (actual_maze[right_pos_row][right_pos_col] == WALL_SYMBOL) {
+        internal_maze[right_pos_row][right_pos_col] = WALL_SYMBOL;
+    }
+
+    // only return a value if front is clear
+    if (actual_maze[next_pos_row][next_pos_col] == WALL_SYMBOL) {
+        internal_maze[next_pos_row][next_pos_col] = WALL_SYMBOL;
+        return 0.1;
+    } else {
+        return 0.9;
+    }
+}
+
 
 // ********** MAZE ********** //
 int main() {
+    int finished = 0;
     int internal_maze[MAZE_SIZE][MAZE_SIZE];
     init_maze(internal_maze);
 
-    int test_maze[MAZE_SIZE][MAZE_SIZE] = {
-        {1, 1, 1, 1, 1, 1},
-        {1, 0, 0, 0, 0, 1},
-        {1, 0, 0, 0, 0, 1},
-        {1, 0, 0, 0, 0, 1},
-        {1, 0, 0, 0, 0, 1},
-        {1, 1, 1, 1, 1, 1},
+    int actual_maze[MAZE_SIZE][MAZE_SIZE] = {
+        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+        {1, 0, 0, 0, 0, 1, 0, 0, 0, 1},
+        {1, 0, 0, 0, 0, 1, 0, 0, 0, 1},
+        {1, 1, 0, 0, 1, 1, 0, 1, 0, 1},
+        {1, 0, 0, 1, 7, 7, 0, 1, 0, 1},
+        {1, 0, 0, 1, 7, 7, 0, 1, 0, 1},
+        {1, 0, 0, 1, 0, 0, 1, 0, 0, 1},
+        {1, 0, 0, 1, 1, 1, 1, 0, 0, 1},
+        {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
     }; 
 
     // initial position
@@ -145,16 +208,38 @@ int main() {
     update_mazes(robot_pos_row,
                  robot_pos_col,
                  internal_maze,
-                 test_maze);
-    print_boards(internal_maze, test_maze);
+                 actual_maze);
+    print_boards(internal_maze, actual_maze);
 
-    move_forward(robot_direction, internal_maze, test_maze, &robot_pos_row, &robot_pos_col);
-    print_boards(internal_maze, test_maze);
+    // walk around maze, avoiding walls
+    while (!finished) {
+        // small random chance of turning before moving, even if space is clear
+        if ((rand() % 10) < 2) {
+            // evenly choose left or right
+            if ((rand() % 10) < 5) {
+                turn_left(&robot_direction);
+            } else {
+                turn_right(&robot_direction);
+            }
+        }
 
-    turn_left(&robot_direction);
-    move_forward(robot_direction, internal_maze, test_maze, &robot_pos_row, &robot_pos_col);
-    print_boards(internal_maze, test_maze);
+        // only move forward if sonar says path is clear
+        if (read_sonars(actual_maze, internal_maze, robot_direction, robot_pos_row, robot_pos_col) > 0.5) {
+            move_forward(robot_direction, internal_maze, actual_maze, &robot_pos_row, &robot_pos_col);
+            print_boards(internal_maze, actual_maze);
+        } else {
+            // evenly choose left or right
+            if ((rand() % 10) < 5) {
+                turn_left(&robot_direction);
+            } else {
+                turn_right(&robot_direction);
+            }
+        }
 
-    
+        if (goal_coords(robot_pos_row, robot_pos_col, MAZE_SIZE)) {
+            finished = 1;
+        }
+    }
+
     return 0;
 }
