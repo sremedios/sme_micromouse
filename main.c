@@ -22,13 +22,13 @@ int goal_coords(int i, int j, int maze_size) {
 
 void update_mazes(int robot_pos_row,
                   int robot_pos_col,
-                  int a[MAZE_SIZE][MAZE_SIZE],
-                  int b[MAZE_SIZE][MAZE_SIZE]) {
+                  char a[MAZE_SIZE][MAZE_SIZE],
+                  char b[MAZE_SIZE][MAZE_SIZE]) {
     a[robot_pos_row][robot_pos_col] = ROBOT_SYMBOL;
     b[robot_pos_row][robot_pos_col] = ROBOT_SYMBOL;
 }
 
-void print_boards(int a[MAZE_SIZE][MAZE_SIZE], int b[MAZE_SIZE][MAZE_SIZE]) {
+void print_boards(char a[MAZE_SIZE][MAZE_SIZE], char b[MAZE_SIZE][MAZE_SIZE]) {
     // Displays mazes side-by-size with a 5 space gap
     const int GAP_SIZE = 5;
     printf("INTERNAL\tACTUAL\n");
@@ -48,7 +48,7 @@ void print_boards(int a[MAZE_SIZE][MAZE_SIZE], int b[MAZE_SIZE][MAZE_SIZE]) {
     printf("\n");
 }
 
-void init_maze(int maze[MAZE_SIZE][MAZE_SIZE]) {
+void init_maze(char maze[MAZE_SIZE][MAZE_SIZE]) {
     for (int i = 0; i < MAZE_SIZE; ++i) {
         for (int j = 0; j < MAZE_SIZE; ++j) {
             if (i == 0 || i == MAZE_SIZE - 1 || j == 0 || j == MAZE_SIZE -1) {
@@ -64,8 +64,8 @@ void init_maze(int maze[MAZE_SIZE][MAZE_SIZE]) {
 
 // only should be called if able to move_forward()
 void move_forward(int robot_direction,
-                  int internal_maze[MAZE_SIZE][MAZE_SIZE],
-                  int actual_maze[MAZE_SIZE][MAZE_SIZE],
+                  char internal_maze[MAZE_SIZE][MAZE_SIZE],
+                  char actual_maze[MAZE_SIZE][MAZE_SIZE],
                   int *robot_pos_row,
                   int *robot_pos_col) {
 
@@ -127,8 +127,8 @@ void turn_right(int *robot_direction) {
 // placeholder results until sonar is connected.
 // If there is a wall in front of the robot, return 0.1
 // Else, return 0.9
-float read_sonars(int actual_maze[MAZE_SIZE][MAZE_SIZE],
-                  int internal_maze[MAZE_SIZE][MAZE_SIZE],
+float read_sonars(char actual_maze[MAZE_SIZE][MAZE_SIZE],
+                  char internal_maze[MAZE_SIZE][MAZE_SIZE],
                   int robot_direction,
                   int robot_pos_row,
                   int robot_pos_col) {
@@ -180,14 +180,23 @@ float read_sonars(int actual_maze[MAZE_SIZE][MAZE_SIZE],
     }
 }
 
+// This will write to EEPROM when ported to arduino code
+void save_maze(char internal_maze[MAZE_SIZE][MAZE_SIZE]) {
+    // TODO: write the whole maze to EEPROM
+    // EEPROM.write(addr, val);
+
+    // tmp: writing to a normal file
+}
+
 
 // ********** MAZE ********** //
 int main() {
     int finished = 0;
-    int internal_maze[MAZE_SIZE][MAZE_SIZE];
+    char internal_maze[MAZE_SIZE][MAZE_SIZE];
     init_maze(internal_maze);
 
-    int actual_maze[MAZE_SIZE][MAZE_SIZE] = {
+
+    char actual_maze[MAZE_SIZE][MAZE_SIZE] = {
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
         {1, 0, 0, 0, 0, 1, 0, 0, 0, 1},
         {1, 0, 0, 0, 0, 1, 0, 0, 0, 1},
@@ -226,7 +235,7 @@ int main() {
         // only move forward if sonar says path is clear
         if (read_sonars(actual_maze, internal_maze, robot_direction, robot_pos_row, robot_pos_col) > 0.5) {
             move_forward(robot_direction, internal_maze, actual_maze, &robot_pos_row, &robot_pos_col);
-            print_boards(internal_maze, actual_maze);
+            //print_boards(internal_maze, actual_maze);
         } else {
             // evenly choose left or right
             if ((rand() % 10) < 5) {
@@ -240,6 +249,35 @@ int main() {
             finished = 1;
         }
     }
+    print_boards(internal_maze, actual_maze);
+
+    printf("Size of internal maze: %d\n", sizeof(internal_maze));
+
+    // Write to a file
+    
+    // first set the robot's current, goal position back to the GOAL_SYMBOL
+    internal_maze[robot_pos_row][robot_pos_col] = GOAL_SYMBOL;
+   
+    // then write
+    FILE *fp;
+    fp = fopen("internal_maze.dat", "wb");
+    fwrite(internal_maze, sizeof(char), MAZE_SIZE * MAZE_SIZE, fp);
+    fclose(fp);
+
+
+    // Read from that file for testing
+    char new_internal_maze[MAZE_SIZE][MAZE_SIZE];
+    init_maze(new_internal_maze);
+
+    FILE *infile;
+    infile = fopen("internal_maze.dat", "rb");
+    fread(&new_internal_maze, sizeof(char), MAZE_SIZE * MAZE_SIZE, infile);
+    fclose(infile);
+
+    print_boards(new_internal_maze, internal_maze);
+
+
+    // now reset position and pathfind with any algorithm, then move in that path
 
     return 0;
 }
