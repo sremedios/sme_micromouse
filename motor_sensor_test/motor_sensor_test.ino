@@ -234,14 +234,17 @@ void read_maze(char maze[MAZE_SIZE][MAZE_SIZE])
     fclose(infile);
 }
 
-// ********** MAZE ********** //
-int main()
-{
-    int finished = 0;
-    char internal_maze[MAZE_SIZE][MAZE_SIZE];
-    init_maze(internal_maze);
+// GLOBAL VARS
+// initial position
+int robot_pos_row = 1;
+int robot_pos_col = 1;
+int robot_direction = FACING_DOWN;
 
-    char actual_maze[MAZE_SIZE][MAZE_SIZE] = {
+int finished;
+
+// mazes
+char internal_maze[MAZE_SIZE][MAZE_SIZE];
+char actual_maze[MAZE_SIZE][MAZE_SIZE] = {
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
         {1, 0, 0, 0, 0, 1, 0, 0, 0, 1},
         {1, 0, 0, 0, 0, 1, 0, 0, 0, 1},
@@ -254,77 +257,55 @@ int main()
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
     };
 
-    // initial position
-    int robot_pos_row = 1;
-    int robot_pos_col = 1;
-    int robot_direction = FACING_DOWN;
+void setup() {    
+    init_maze(internal_maze);
 
     update_mazes(robot_pos_row,
                  robot_pos_col,
                  internal_maze,
                  actual_maze);
+    finished = 0;
+
+}
+
+void loop() {
     print_boards(internal_maze, actual_maze);
 
-    // walk around maze, avoiding walls
-    while (!finished)
+    // small random chance of turning before moving, even if space is clear
+    if ((rand() % 10) < 2)
     {
-        // small random chance of turning before moving, even if space is clear
-        if ((rand() % 10) < 2)
+        // evenly choose left or right
+        if ((rand() % 10) < 5)
         {
-            // evenly choose left or right
-            if ((rand() % 10) < 5)
-            {
-                turn_left(&robot_direction);
-            }
-            else
-            {
-                turn_right(&robot_direction);
-            }
-        }
-
-        // only move forward if sonar says path is clear
-        if (read_sonars(actual_maze, internal_maze, robot_direction, robot_pos_row, robot_pos_col) > 0.5)
-        {
-            move_forward(robot_direction, internal_maze, actual_maze, &robot_pos_row, &robot_pos_col);
-            //print_boards(internal_maze, actual_maze);
+            turn_left(&robot_direction);
         }
         else
         {
-            // evenly choose left or right
-            if ((rand() % 10) < 5)
-            {
-                turn_left(&robot_direction);
-            }
-            else
-            {
-                turn_right(&robot_direction);
-            }
-        }
-
-        if (goal_coords(robot_pos_row, robot_pos_col, MAZE_SIZE))
-        {
-            finished = 1;
+            turn_right(&robot_direction);
         }
     }
-    print_boards(internal_maze, actual_maze);
 
-    //printf("Size of internal maze: %d\n", sizeof(internal_maze));
+    // only move forward if sonar says path is clear
+    if (read_sonars(actual_maze, internal_maze, robot_direction, robot_pos_row, robot_pos_col) > 0.5)
+    {
+        move_forward(robot_direction, internal_maze, actual_maze, &robot_pos_row, &robot_pos_col);
+        //print_boards(internal_maze, actual_maze);
+    }
+    else
+    {
+        // evenly choose left or right
+        if ((rand() % 10) < 5)
+        {
+            turn_left(&robot_direction);
+        }
+        else
+        {
+            turn_right(&robot_direction);
+        }
+    }
 
-    // Write to a file
-
-    // first set the robot's current, goal position back to the GOAL_SYMBOL
-    internal_maze[robot_pos_row][robot_pos_col] = GOAL_SYMBOL;
-
-    // then write
-    save_maze(internal_maze);
-
-    // Read from that file for testing
-    char new_internal_maze[MAZE_SIZE][MAZE_SIZE];
-    read_maze(new_internal_maze);
-
-    print_boards(new_internal_maze, internal_maze);
-
-    // now reset position and pathfind with any algorithm, then move in that path
-
-    return 0;
+    if (goal_coords(robot_pos_row, robot_pos_col, MAZE_SIZE))
+    {
+        finished = 1;
+    }
 }
